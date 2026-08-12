@@ -1,0 +1,6 @@
+{
+  "name": "hired-exe",
+  "version": "0.2.1",
+  "description": "Job search pipeline for Claude Cowork. Scans your inbox for roles, fetches the job description, scores each one against a rubric you write during setup, and tracks it all in Notion.",
+  "keywords": ["job-search", "pipeline", "notion", "gmail", "scoring"]
+}

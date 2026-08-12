@@ -1,0 +1,18 @@
+{
+  "name": "get-hired-run",
+  "owner": {
+    "name": "Kaegan Donnelly",
+    "url": "https://github.com/kaegan"
+  },
+  "plugins": [
+    {
+      "name": "hired-exe",
+      "source": "./plugins/hired-exe",
+      "description": "Job search pipeline for Claude Cowork. Scans your inbox for roles, fetches the job description, scores each one against a rubric you write during setup, and tracks it all in Notion.",
+      "version": "0.2.1",
+      "author": {
+        "name": "Kaegan Donnelly"
+      }
+    }
+  ]
+}
