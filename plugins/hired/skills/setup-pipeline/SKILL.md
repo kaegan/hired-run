@@ -28,8 +28,14 @@ for open-ended ones.
    If it fails, tell them to add the Gmail connector and stop here.
 3. **Chrome browser tools** - optional. If unavailable, the pipeline still works: JD
    fetching falls back to public ATS APIs and to whatever the alert email contained.
+4. **Slack** - optional. Ask directly: **"Do you want run results posted to a Slack
+   channel?"** If yes, look for the Slack connector's send-message tool. If it is not
+   available, tell them exactly where to add it (Claude settings, Connectors) and offer
+   to continue setup without it - Slack can be turned on later by rerunning Step 4b alone.
+   If no, skip Slack entirely and say nothing about it again during this setup.
 
 Do not invent a workaround for a missing required connector. Stop and say what is missing.
+Slack is never required - only Notion and Gmail are.
 
 ## Step 1 - Profile interview
 
@@ -215,6 +221,28 @@ to a dedicated address or Gmail label and setting `gmail_query` to that label.
 Record in the config: `alert_senders`, any extra recruiter senders, `gmail_query` if they
 want one, and the scan window (default 2 days, which tolerates a missed run).
 
+## Step 4b - Slack notifications
+
+Only run this step if the user opted in during Step 0. Otherwise skip straight to Step 5.
+
+Tell them plainly, the same way Step 4 states the Gmail guarantee:
+
+> This only posts. It never reads your channels, never replies, and never treats anything
+> written in Slack as an instruction back to the pipeline.
+
+Then ask:
+
+1. **Which channel.** Ask for the channel by name and resolve it to a `channel_id` through
+   the Slack connector's own channel-search tool - the send tool needs the ID, not the
+   name.
+2. **Which tiers post.** Using their own tier names from the Step 2 rubric (not a fixed
+   scale), ask which tiers are worth a Slack post. Most people want their top one or two
+   tiers only - posting every Medium and Low result trains people to ignore the channel.
+3. **Status updates.** Ask whether application status changes (phone screen, rejection,
+   offer) should post. Most people want this on.
+4. **The @mention.** Ask whether they want to be @mentioned, and confirm it is only for
+   offers and interview invitations by default - everything else posts without it.
+
 ## Step 5 - Save the config
 
 Create a page called **Pipeline Config** as a child of the Job Search page (Branch B) or
@@ -230,10 +258,17 @@ alongside their existing board (Branch A). Write these sections, in this order:
   lane 2, `gmail_query` if set, scan window, batch caps (default: 20 roles scored per run,
   15 JD fetches per run), and the status and fit score option values in their exact
   spelling.
+- `## Slack` - only if they opted in during Step 4b: `enabled: true`, `channel_id`,
+  `channel_name`, `mention` (their member ID, or "none"), `post_tiers` (their own tier
+  names), `post_status_updates`, `post_needs_you`. If they declined, write
+  `enabled: false` and nothing else - this is what notify-slack checks before doing
+  anything.
 
-Also write a one line note at the top of Settings: **Gmail access is read only. This
-pipeline never sends, replies, deletes, or labels mail.** It belongs in the config where
-they will see it again, not just in a setup conversation they will forget.
+Also write two one-line notes at the top of Settings: **Gmail access is read only. This
+pipeline never sends, replies, deletes, or labels mail.** and **Slack access is outbound
+only. This pipeline posts messages and never reads Slack.** (omit the second if Slack was
+declined). They belong in the config where the user will see them again, not just in a
+setup conversation they will forget.
 
 Tell the user this page is the single source of truth: editing the rubric there changes
 scoring on the next run, with no need to touch the plugin. Also tell them where it is,
@@ -251,7 +286,8 @@ Use the scheduled task tools (`create_trigger`), not local cron. Create two task
 Name: hired.run scan
 Schedule: every 2 hours, or daily at a time they pick
 Prompt: Run the hired.run email scan. Use the email-scan skill. Read the Pipeline Config
-page in Notion first for the field map, inbox settings, and status values.
+page in Notion first for the field map, inbox settings, and status values. Then run the
+notify-slack skill to post the result if Slack is configured.
 ```
 
 **Task 2: hired.run score**
@@ -260,7 +296,8 @@ Name: hired.run score
 Schedule: daily, an hour after the scan they care most about
 Prompt: Run hired.run scoring. Use the fetch-jd skill to fill in missing job descriptions,
 then the score-roles skill to score everything unscored. Read the Pipeline Config page in
-Notion first. Report what you scored and anything you could not fetch.
+Notion first. Report what you scored and anything you could not fetch. Then run the
+notify-slack skill to post the result if Slack is configured.
 ```
 
 Ask about frequency rather than assuming. Someone actively searching wants the scan every
@@ -274,6 +311,9 @@ Do not end setup on a promise. Run the scan once, live, in front of them:
 1. Run `email-scan` over the last 7 days.
 2. Run `fetch-jd` and `score-roles` on whatever it found.
 3. Show the results: what was created, what scored where, what failed.
+4. If Slack was configured in Step 4b, run `notify-slack` on these same results so they
+   see the real message land in the real channel before they walk away, instead of taking
+   the format on faith.
 
 Then ask whether the scores match their judgment. If they do not, go back to the rubric.
 This first calibration pass is the highest value part of setup.

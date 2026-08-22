@@ -19,6 +19,8 @@ takes five minutes instead of an hour of tab management.
   under a label.
 - **Chrome browser tools** - optional. Most job descriptions come from public APIs without
   a browser. A browser only helps on the awkward career pages.
+- **Slack connector** - optional. Outbound only: posts run results to a channel you pick.
+  Off unless you turn it on during setup.
 
 ## Getting started
 
@@ -47,6 +49,7 @@ correct the rubric while it is still cheap to correct.
 | `email-scan` | "check my email for new roles" | Reads the inbox, creates records, applies status updates from ATS mail |
 | `fetch-jd` | "fetch the job descriptions" | Pulls full descriptions via public ATS APIs, browser as fallback |
 | `score-roles` | "score these roles" or "score this: <url>" | Scores against your rubric, writes tier plus summary to Notion |
+| `notify-slack` | (runs automatically after a scan or score, if configured) | Posts high-fit roles, status changes, and items needing a reply to a Slack channel you chose |
 
 After setup, two scheduled tasks run this on their own. You mostly just read the board.
 
@@ -92,12 +95,20 @@ edit whenever a score annoys you. It holds:
 When a score is wrong, fix the rule that produced it, not the score. A rubric corrected a
 few times in the first two weeks becomes something you trust.
 
+## Slack notifications (optional)
+
+Turn it on during setup and the pipeline posts high-fit roles, application status
+changes, and anything needing a reply to a channel you pick. It is off by default, and
+outbound only - it never reads a channel, never replies, and never treats anything
+written there as an instruction back to the pipeline. A quiet run stays quiet; nothing
+posts unless something actually happened.
+
 ## What it deliberately does not do
 
-No resume writing, no cover letters, no interview prep, no Slack notifications, no
-scanning company career boards directly. This is the intake and triage loop only. Those
-other pieces exist but they are much more personal, and they are worth building on top of
-a triage loop that already works rather than bundling in on day one.
+No resume writing, no cover letters, no interview prep, no auto-applying, no scanning
+company career boards directly. This is the intake and triage loop only. Those other
+pieces exist but they are much more personal, and they are worth building on top of a
+triage loop that already works rather than bundling in on day one.
 
 ## Things learned the hard way, now baked in
 

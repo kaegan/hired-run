@@ -98,6 +98,16 @@ queue past the cap, and any errors.
 If the batch produced no High or Very High roles, say that plainly in one line. It is a
 real result, and padding it obscures the signal on the days when there is one.
 
+## Step 6 - Post to Slack
+
+If the Pipeline Config `## Slack` section says `enabled: true`, call the notify-slack
+skill with the roles from this batch whose tier is in the configured `post_tiers`, plus
+any errors from this run and from the fetch-jd run that fed it (fetch-jd has no Slack post
+of its own - its failures ride along on this one). If Slack is not enabled, skip this step
+silently.
+
+A failed or skipped Slack post never changes the chat report above.
+
 ## Scoring a single role on request
 
 When the user pastes a URL or a description and asks how it scores, run the same rubric
