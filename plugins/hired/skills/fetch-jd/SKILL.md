@@ -4,7 +4,7 @@ description: >
   Fetch the full job description for postings that have a URL but no description yet, and
   store it as a subpage on the Notion record. Trigger when the user says "fetch the job
   descriptions", "get the JDs", "fill in the postings", when scoring needs a description
-  that is missing, or as part of a scheduled hired-exe scoring run.
+  that is missing, or as part of a scheduled hired.run scoring run.
 metadata:
   version: "0.2.1"
 ---

@@ -39,10 +39,11 @@ fails, skip it and carry on. Never let an icon failure block a record.
 
 `To Review` is the intake state. Every new record starts there.
 
-`Last Seen` and `Times Seen` exist so the pipeline can distinguish an evergreen posting
-that keeps appearing in alerts from a role that closed and genuinely reopened months
-later. Without them, dedup either creates duplicates or hides reopenings. They are cheap
-and worth having.
+`Last Seen` and `Times Seen` exist so the pipeline can tell an evergreen posting that
+keeps appearing in alerts from one that has gone quiet, and so a suppressed duplicate
+still leaves a trace on the record it matched. Dedup itself does not branch on them: a
+company plus title match suppresses regardless of how old the existing record is. They
+are cheap and worth having.
 
 ## Page icons
 

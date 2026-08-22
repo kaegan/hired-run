@@ -4,7 +4,7 @@ description: >
   Scan Gmail for job alert emails and applicant tracking system status updates, then
   create or update records on the user's Notion board. Trigger when the user says
   "check my email for new roles", "scan for jobs", "run the job scan", or when a
-  scheduled hired-exe scan fires.
+  scheduled hired.run scan fires.
 metadata:
   version: "0.2.1"
 ---
@@ -152,8 +152,18 @@ That stays complete and fast at any board size.
 
 Alert emails append tracking parameters, so the same role arrives with different raw URLs
 in different emails. Before comparing anything, compute a canonical URL for each
-candidate: lowercase the host, strip everything from `?` and `#` onward, drop a trailing
-slash. For job board view URLs, reduce to the bare posting path plus its ID.
+candidate:
+
+1. Lowercase the host and strip a leading `www.`
+2. Fold ATS host aliases. The same board is often served from more than one hostname, and
+   the variants must normalize to one: `boards.greenhouse.io` = `job-boards.greenhouse.io`
+   = `greenhouse.io`; `hire.lever.co` = `jobs.lever.co`. Add pairs as you hit them.
+3. Strip everything from `?` and `#` onward, with one carve-out: keep a job-id query
+   parameter (such as Greenhouse's `gh_jid`) ONLY when the path carries no job id of its
+   own. An embedded board at `company.com/careers?gh_jid=123` needs it. A native board URL
+   at `/jobs/123?gh_jid=123` does not, and keeping it splits one req into two.
+4. Drop a trailing slash.
+5. For job board view URLs, reduce to the bare posting path plus its ID.
 
 Store the raw URL in `posting_url`. Compare on the canonical form.
 
@@ -175,10 +185,15 @@ WHERE "<posting_url>" IN ('<url1>', '<url2>', ...)
 Normalize the stored values the same way before comparing, since they may carry tracking
 parameters too.
 
-A URL match counts as a duplicate **only if the title also matches**. Some postings share
-a generic careers portal URL across many different roles, so a bare domain or a `/careers`
-index with no per-job path tells you nothing. Skip on URL alone only when it is a specific
-posting URL with a per-job ID and the title matches.
+**A specific posting URL is decisive on its own.** If the canonical URL carries a per-job
+ID or path and it matches an existing record, it is the same req. Skip, regardless of
+title. Do NOT also require the title to match: employers rewrite titles on live reqs, and
+requiring both is a reliable way to end up with `Lead Product Manager` and `Lead Game
+Product Manager` as two records on one job ID.
+
+The one carve-out is a **generic careers portal**. A bare domain or a `/careers` index with
+no per-job path is shared across many DISTINCT roles, so it never matches on its own. For
+those URLs only, fall through to 3d.
 
 ### 3d. Company plus title check
 
@@ -192,37 +207,51 @@ FROM "<data_source_id>" WHERE "<company>" = '<company_id_or_name>'
 
 A company scoped query returns a handful of rows at any board size.
 
-Normalize titles before comparing: case insensitive, "Sr." equals "Senior", ignore
-punctuation, and treat minor renames as the same role. Exclude child pages such as "Job
-Description" from every comparison.
+Normalize both titles the same way, then require **exact equality** of the normalized
+forms: lowercase and trim; drop a trailing parenthetical naming a location, team or
+product; replace `&` with `and` (do not strip it, or `Platform & Agentic` stops matching
+`Platform and Agentic`); strip `.` `,` `-` `(` `)` `/` to spaces and collapse runs of
+whitespace; expand `Sr.` to `Senior` and `Jr.` to `Junior` on whole words only.
 
-If a same or near-same title already exists for that company, apply the repost matrix,
-using the gap since that record was last seen (fall back to date added if `last_seen` is
-absent):
+Nothing looser. Do NOT treat "minor renames" as the same role: `Platform` and `Core
+Platform` are different, and so are `Senior` and `Principal` of the same title. On a near
+match, create the record and flag it for review rather than guessing.
 
-- Existing record is **terminal** (rejected, withdrawn, passed, closed): a genuine
-  reopening. Create a new record.
-- Not terminal, **last seen within 90 days**: the same posting still open. Skip, and bump
-  the survivor in step 3e.
-- Not terminal, **last seen more than 90 days ago**: a genuine repost. Prefer reopening
-  the existing record over creating a new one. Set its status back to the intake value and
-  stamp `last_seen`, which preserves its score and history.
+Exclude child pages such as "Job Description" from every comparison.
 
-If the board has no `last_seen` and no `times_seen`, fall back to date added and say so in
-the report. Accuracy drops, which is why setup recommends adding them.
+**On an exact company plus title match, suppress. No status branch, no recency window.**
+
+| Existing record | Action |
+|---|---|
+| Terminal (rejected, withdrawn, passed, closed, no response, duplicate) | Do not create. Report as a **resurfaced terminal hit** with the prior status, prior date, and both URLs. Do not reopen. |
+| Live intake statuses | Do not create. The role is already in the queue. Bump the survivor in 3e. Report as a suppressed live duplicate. |
+| Submitted or any later funnel stage | Do not create. You already applied. Bump the survivor. Report it. |
+
+There used to be a repost matrix here that said a terminal record plus a *different*
+canonical URL meant a genuine reopening, and told you to create a new record. That is
+backwards, and it is the single largest source of duplicates on a mature board. A req
+cross-posted to a second job board carries a different URL on each, ATS reposts get a
+fresh UUID, and aggregator IDs churn. A different URL is not evidence of a reopening. The
+matrix was retired 2026-08-15.
+
+Suppression is safe in all three branches, which is why there is no status filter and no
+gap test. The one lossy case is a company that genuinely has two distinct open reqs with
+identical titles, and that is why every suppression is **reported** rather than silent: if
+it turns out to be a real second req, create it by hand from the report. Do not add
+heuristics to guess at this.
 
 ### 3e. Stamp every sighting
 
-`last_seen` is what the repost matrix depends on, so refresh it whenever a scan sees a
-role live, not only when creating something:
+`last_seen` is how the board tells an evergreen req from a stale one, so refresh it
+whenever a scan sees a role live, not only when creating something:
 
 - New record: `last_seen` = today, `times_seen` = 1.
-- Skipped as a duplicate: update the existing record. `last_seen` = today, increment
-  `times_seen`.
-- Reopened repost: status back to intake, `last_seen` = today, increment `times_seen`.
+- Skipped as a duplicate (matched on URL in 3c or company plus title in 3d): update the
+  existing record. `last_seen` = today, increment `times_seen`.
+- **Never reopen a record from a scan.** Bump `last_seen` and `times_seen`, report the
+  hit, and leave the status alone. Only a human moves a record back to intake.
 
-Skip this and `last_seen` never updates, which silently turns the gap rule back into a
-date-added rule.
+Skip this and `last_seen` never updates, so a high `times_seen` stops meaning anything.
 
 ### 3f. Fail loudly on errors, not on empty results
 
@@ -285,7 +314,9 @@ Output, in this order:
    worth answering, anything with a deadline. This is the part the user actually reads.
 2. Roles added, with company and title.
 3. Status updates applied: company, title, old to new.
-4. Duplicates skipped and reposts reopened.
+4. Duplicates suppressed, split into resurfaced terminal hits (with the prior status and
+   date) and live duplicates. Never collapse these into a single count: the user cannot
+   otherwise tell "nothing new found" from "we suppressed six roles you already decided on."
 5. **Coverage check.** Lane 1 is an allowlist, so its gaps are invisible by design. Every
    run, look at the senders in the window that were neither on the allowlist nor matched
    in lane 2, and flag any that look like job alerts (repeated sender, multiple postings

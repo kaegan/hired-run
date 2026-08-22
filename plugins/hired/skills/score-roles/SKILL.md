@@ -3,7 +3,7 @@ name: score-roles
 description: >
   Score job postings against the user's own rubric and write the score and a short
   summary to their Notion board. Trigger when the user says "score these roles", "score
-  this job", "how's the fit", "rate this posting", when a scheduled hired-exe scoring run
+  this job", "how's the fit", "rate this posting", when a scheduled hired.run scoring run
   fires, or when new records need evaluating.
 metadata:
   version: "0.2.1"

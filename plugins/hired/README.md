@@ -1,8 +1,10 @@
-# hired-exe
+# hired
 
 A job search pipeline for Claude Cowork. It reads your inbox for new roles and
 application updates, fetches the actual job description, scores each role against a rubric
 **you** write during setup, and keeps it all on a Notion board.
+
+Site: [hired.run](https://hired.run)
 
 The point is not automation for its own sake. It is that every morning there is one view,
 sorted, with a two-sentence reason attached to each role, so deciding what to apply to
@@ -110,8 +112,11 @@ These are the failures this pipeline has already hit, in case you extend it:
   Candidate-scoped exact queries stay correct at any size.
 - **Never load the whole table to diff against either.** You get the first page only, and
   everything past it looks brand new.
-- **A sender allowlist is the wrong filter for a job inbox.** Every gap drops real signal
-  with no error to notice. Read broadly and classify by content.
+- **A sender allowlist fails silently.** Every gap drops real signal with no error to
+  notice. This pipeline still uses one for intake, deliberately, because it is the only
+  filter that keeps record creation contained — but it pairs the allowlist with a
+  coverage check that reports senders which fell outside it, so gaps become visible and
+  get added on purpose instead of discovered by accident.
 - **Strip tracking parameters before comparing URLs.** The same role arrives with a
   different URL in every email.
 - **A retry counter that does not record which technique was tried** turns a tooling

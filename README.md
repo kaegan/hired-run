@@ -1,6 +1,6 @@
-# get-hired-run
+# hired-run
 
-A Claude Cowork plugin marketplace. Currently one plugin: **hired-exe**, a job search
+A Claude Cowork plugin marketplace. Currently one plugin: **hired**, a job search
 pipeline that reads your inbox for new roles and application updates, fetches the actual
 job description, scores each role against a rubric you write during setup, and keeps it
 all on a Notion board.
@@ -9,13 +9,15 @@ The point is not automation for its own sake. It is that every morning there is 
 sorted, with a two sentence reason attached to each role, so deciding what to apply to
 takes five minutes instead of an hour of tab management.
 
+Site: [hired.run](https://hired.run)
+
 ## Install
 
 In a Claude Cowork session on the desktop app:
 
 ```
-/plugin marketplace add kaegan/get-hired-run
-/plugin install hired-exe@get-hired-run
+/plugin marketplace add kaegan/hired-run
+/plugin install hired@hired-run
 ```
 
 Then say **"set up my job search pipeline"** and answer the questions.
@@ -84,11 +86,11 @@ one.
 
 ```
 .claude-plugin/marketplace.json   marketplace manifest
-plugins/hired-exe/                the plugin
+plugins/hired/                    the plugin
 ```
 
 To publish an update: change the files, bump `version` in **both**
-`plugins/hired-exe/.claude-plugin/plugin.json` and the entry in
+`plugins/hired/.claude-plugin/plugin.json` and the entry in
 `.claude-plugin/marketplace.json`, then push. Without a version bump, installs will not
 see the change.
 

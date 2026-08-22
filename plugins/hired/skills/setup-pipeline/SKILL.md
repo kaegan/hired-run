@@ -1,8 +1,8 @@
 ---
 name: setup-pipeline
 description: >
-  First-run setup for the hired-exe job search pipeline. Trigger when the user says
-  "set up my job search pipeline", "set up hired-exe", "initialize the job pipeline",
+  First-run setup for the hired.run job search pipeline. Trigger when the user says
+  "set up my job search pipeline", "set up hired.run", "initialize the job pipeline",
   "configure my job search", or on first install. Interviews the user to build their
   profile and their own scoring rubric, connects to an existing Notion board or creates
   a new one, and schedules the recurring scans.
@@ -151,13 +151,13 @@ in, or should I create one?"**
    | `salary_range` | Text | no | scoring |
    | `source` | Select | no | reporting |
    | `date_added` | Date | no | reporting |
-   | `last_seen` | Date | recommended | repost detection |
-   | `times_seen` | Number | recommended | repost detection |
+   | `last_seen` | Date | recommended | sighting freshness |
+   | `times_seen` | Number | recommended | sighting count |
 
 4. For anything missing, ask whether to add it. Explain the cost of skipping: without
-   `last_seen` and `times_seen` the pipeline cannot tell a still-open posting from a
-   genuine repost, so it will either create duplicates or skip real reopenings. Without
-   `fit_score` there is nowhere to write the score. Add the properties they approve, and
+   `last_seen` and `times_seen` a suppressed duplicate leaves no trace, so the user cannot
+   tell an evergreen req that shows up in every alert from one that has gone quiet.
+   Without `fit_score` there is nowhere to write the score. Add the properties they approve, and
    record the rest as absent so the other skills degrade instead of erroring.
 5. For `status` and `fit_score`, read their existing option values and map the pipeline's
    states onto them rather than adding new ones. The pipeline needs an intake state (a
@@ -246,19 +246,19 @@ folder they choose. The Notion page is what the skills read.
 
 Use the scheduled task tools (`create_trigger`), not local cron. Create two tasks:
 
-**Task 1: hired-exe scan**
+**Task 1: hired.run scan**
 ```
-Name: hired-exe scan
+Name: hired.run scan
 Schedule: every 2 hours, or daily at a time they pick
-Prompt: Run the hired-exe email scan. Use the email-scan skill. Read the Pipeline Config
+Prompt: Run the hired.run email scan. Use the email-scan skill. Read the Pipeline Config
 page in Notion first for the field map, inbox settings, and status values.
 ```
 
-**Task 2: hired-exe score**
+**Task 2: hired.run score**
 ```
-Name: hired-exe score
+Name: hired.run score
 Schedule: daily, an hour after the scan they care most about
-Prompt: Run hired-exe scoring. Use the fetch-jd skill to fill in missing job descriptions,
+Prompt: Run hired.run scoring. Use the fetch-jd skill to fill in missing job descriptions,
 then the score-roles skill to score everything unscored. Read the Pipeline Config page in
 Notion first. Report what you scored and anything you could not fetch.
 ```
