@@ -28,7 +28,8 @@ takes five minutes instead of an hour of tab management.
 2. Connect Notion and Gmail.
 3. Have 3 to 5 job postings handy that represent what you are going after, plus one or two
    you looked at and passed on. Links are fine.
-4. Say **"set up my job search pipeline"**.
+4. Optionally, have your resume handy, and a cover letter or two you actually sent.
+5. Say **"set up my job search pipeline"**.
 
 Setup takes about 20 minutes and most of it is the rubric interview. Do not skip that
 part. A pipeline with a lazy rubric surfaces everything as "High" and you stop looking at
@@ -46,6 +47,7 @@ correct the rubric while it is still cheap to correct.
 | Skill | Say | What it does |
 |---|---|---|
 | `setup-pipeline` | "set up my job search pipeline" | Interviews you, builds your rubric, connects or creates the Notion board, schedules the runs |
+| `load-experience` | "use my resume" | Reads a resume and cover letters you point at, and writes the evidence scoring cites |
 | `email-scan` | "check my email for new roles" | Reads the inbox, creates records, applies status updates from ATS mail |
 | `fetch-jd` | "fetch the job descriptions" | Pulls full descriptions via public ATS APIs, browser as fallback |
 | `score-roles` | "score these roles" or "score this: <url>" | Scores against your rubric, writes tier plus summary to Notion |
@@ -80,6 +82,29 @@ replacing it. It reads your property names and types, maps them to what the pipe
 needs, offers to add anything missing, and uses your status vocabulary throughout. It
 never renames, retypes, or deletes anything you already have.
 
+## Your resume, as evidence
+
+Point setup at a resume - a file, a Notion page, or pasted text - and it reads it instead
+of making you recite your own career. Add a cover letter or two you actually sent and it
+picks up how you position yourself, which is usually sharper than anything on the resume.
+What comes out is an **Experience** page next to your rubric: roles, scope, proof points,
+domains you are genuinely deep in versus ones you touched once, and the gaps.
+
+Scoring then cites it. Instead of "strong product background", a summary says which of
+your accomplishments maps to the scope in the posting, and names the one or two things
+the posting asks for that nothing in your background supports. That second half is the
+useful one, and it is the part a rubric alone cannot produce.
+
+The split that keeps this honest: **the rubric says what you want, the resume says what
+is true about you.** A resume never becomes criteria. Four fintech roles on it is not a
+preference for fintech; only the rubric states preferences, and only you write the rubric.
+
+It is optional - the pipeline scores fine without it, off the proof points from the
+interview. And your resume is read, never written: nothing edits it, nothing improves it,
+nothing sends it anywhere. The contents land on your own Notion page and stop there.
+
+Re-run it with "use my resume" whenever the resume changes.
+
 ## The rubric is the whole thing
 
 Everything else is plumbing. The rubric is a page in Notion, in plain language, that you
@@ -105,10 +130,12 @@ posts unless something actually happened.
 
 ## What it deliberately does not do
 
-No resume writing, no cover letters, no interview prep, no auto-applying, no scanning
-company career boards directly. This is the intake and triage loop only. Those other
-pieces exist but they are much more personal, and they are worth building on top of a
-triage loop that already works rather than bundling in on day one.
+No resume or cover letter writing, no interview prep, no auto-applying, no scanning
+company career boards directly. It reads a resume you point it at, as evidence for
+scoring; it never writes one, never edits one, and never sends one anywhere. This is the
+intake and triage loop only. Those other pieces exist but they are much more personal,
+and they are worth building on top of a triage loop that already works rather than
+bundling in on day one.
 
 ## Things learned the hard way, now baked in
 

@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.5.0 — 2026-08-22
+
+Your resume and cover letters can now feed matching, via a new `load-experience` skill.
+
+- Point it at a resume - a file, a Notion page, or pasted text - and it writes an
+  **Experience** page beside your rubric: roles, scope, proof points, domains split into
+  deep and adjacent and thin, and the gaps. Cover letters are optional and add how you
+  position yourself, which is usually sharper than the resume.
+- `score-roles` reads that page and runs an evidence pass per rubric dimension. Summaries
+  now cite which of your accomplishments maps to the posting, and name the requirements
+  nothing in your background supports. They never cite evidence that is not on the page.
+- The rubric still decides what matters. Experience only says what is true about you: it
+  can change how strongly a role matches a dimension the rubric already names, and can
+  never add a dimension, write or relax a hard filter, or move the tier definitions. A
+  resume is a record of where someone has been, not a statement of what they want.
+- Matching is on substance, not vocabulary. Shared jargon is not evidence, and a domain
+  touched once does not score as depth.
+- Optional throughout. Without a resume, scoring works exactly as it did, off the proof
+  points from the interview.
+- Read, never written. Nothing edits your resume, improves it, posts it to Slack, or
+  sends it anywhere; the contents are written only to your own Notion page.
+- `setup-pipeline` now offers this at the profile step and uses the interview to confirm
+  and fill gaps instead of asking you to recite a career you already wrote down.
+
 ## 0.4.0 — 2026-08-22
 
 Added optional Slack notifications, via a new `notify-slack` skill.

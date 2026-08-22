@@ -1,6 +1,6 @@
 {
   "name": "hired",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Job search pipeline for Claude Cowork. Scans your inbox for roles, fetches the job description, scores each one against a rubric you write during setup, and tracks it all in Notion.",
   "author": {
     "name": "Kaegan Donnelly",
