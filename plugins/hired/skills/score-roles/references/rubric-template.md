@@ -38,6 +38,10 @@ How the score responds:
 Standout logic sits on top of the dimensions, not instead of them. Hard filters still
 apply: a perfect standout role that fails a location filter is still capped.
 
+State what makes each dimension credible, not just what it covers. If an Experience page
+exists, that is where the evidence lives and the scorer will check it; a standout claim
+with nothing behind it inflates scores rather than sharpening them.
+
 ## Dimensions
 
 For each, what pushes a role up, what pushes it down, and whether it is a filter or a

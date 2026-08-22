@@ -7,7 +7,7 @@ description: >
   profile and their own scoring rubric, connects to an existing Notion board or creates
   a new one, and schedules the recurring scans.
 metadata:
-  version: "0.2.1"
+  version: "0.3.0"
 ---
 
 # Setup Pipeline
@@ -39,6 +39,21 @@ Slack is never required - only Notion and Gmail are.
 
 ## Step 1 - Profile interview
 
+**Start by asking for a resume.**
+
+> "Do you have a resume handy? Point me at it - a file, a Notion page, or pasted text -
+> and I will read it instead of making you recite it. If you have a cover letter or two
+> you actually sent, those help as well. Either way I have follow-up questions after."
+
+If they do, run the **load-experience** skill now, before the questions below. It reads
+the documents and writes an Experience page that scoring cites later. Then use this
+interview to **confirm and fill gaps** rather than to collect from scratch: a resume
+answers what they have done, and never answers what they want next, which is most of what
+follows.
+
+If they do not have one, or would rather not, say that is fine and run the interview as
+written. Ask once. A resume is optional and the pipeline works without it.
+
 Ask, in this order. Keep it conversational, one group at a time.
 
 **Identity and logistics**
@@ -56,6 +71,8 @@ Ask, in this order. Keep it conversational, one group at a time.
   title step down for.
 - Titles or levels that are an automatic no.
 - Years of relevant experience and the scope they have carried (team size, budget, org).
+  If a resume was loaded, read your figures back and let them correct you instead of
+  asking them to add it up again.
 
 **Domains**
 
@@ -70,6 +87,11 @@ Ask, in this order. Keep it conversational, one group at a time.
 - 4 to 6 of their strongest, most specific accomplishments. Push for numbers. "Grew
   activation 25% by rebuilding onboarding" is usable; "improved the product" is not.
   These are what the scorer compares a job description against.
+- If a resume was loaded, these are already on the Experience page. Do not ask for them
+  again. Show the six you would put in front of a scorer and ask which they would drop,
+  and what is missing that never made it onto a resume - side projects, unpaid work, a
+  domain they know from outside a job. That question earns more than the original one
+  does, because resumes are edited for a purpose and leave things out.
 
 **Deal breakers**
 
@@ -85,6 +107,10 @@ Ask, in this order. Keep it conversational, one group at a time.
 
 Do not fill in any of these from assumption or from another user's setup. If they skip a
 question, write "not specified" and let the scorer treat that dimension as neutral.
+
+A resume is not an exception to that rule. It settles facts - titles, dates, scope,
+domains - and settles nothing about preferences, deal breakers, or comp. Read those out
+of the interview only, however obvious the resume seems to make them.
 
 ## Step 2 - Rubric interview
 
@@ -119,7 +145,10 @@ The output is a filled-in rubric with these parts:
 3. **Standout logic**, if they have any: the combination of things that makes them an
    unusual candidate rather than a merely qualified one, and how much a role hitting that
    combination should be boosted. Many people have this and have never written it down.
-   Ask about interests, side projects, and unusual background, not just work history.
+   Ask about interests, side projects, and unusual background, not just work history. If
+   they gave you cover letters, the angles they lead with there are the best available
+   draft of this - propose them back as a question and let the user confirm or reject
+   each one. Never promote something out of a cover letter into the rubric unasked.
 4. **Company signals** they care about (stage, size, funding, remote culture, glassdoor
    patterns, whatever they name) and any tier list they want to maintain.
 5. **Tier definitions**: what Very High, High, Medium, Low, and Very Low each mean in
@@ -248,9 +277,13 @@ Then ask:
 Create a page called **Pipeline Config** as a child of the Job Search page (Branch B) or
 alongside their existing board (Branch A). Write these sections, in this order:
 
-- `## Profile` - everything from Step 1, as prose and bullets. Readable, not YAML.
+- `## Profile` - everything from Step 1, as prose and bullets. Readable, not YAML. If a
+  resume was loaded, add the one-line pointer to the **Experience** child page rather
+  than duplicating its contents here.
 - `## Rubric` - the full rubric from Step 2, including tier definitions and calibration
   notes.
+- **Experience** - a child page, not a section, written by load-experience if a resume
+  was loaded. Skip it entirely if there was no resume; nothing downstream requires it.
 - `## Field Map` - a table of canonical name, their property name, property type, and
   present/absent. Include the database and **data source** IDs, and the Companies DB ID
   if there is one.
@@ -264,10 +297,11 @@ alongside their existing board (Branch A). Write these sections, in this order:
   `enabled: false` and nothing else - this is what notify-slack checks before doing
   anything.
 
-Also write two one-line notes at the top of Settings: **Gmail access is read only. This
+Also write these one-line notes at the top of Settings: **Gmail access is read only. This
 pipeline never sends, replies, deletes, or labels mail.** and **Slack access is outbound
 only. This pipeline posts messages and never reads Slack.** (omit the second if Slack was
-declined). They belong in the config where the user will see them again, not just in a
+declined) and, if a resume was loaded, **Your resume is read, never written, and never
+leaves your own Notion.** They belong in the config where the user will see them again, not just in a
 setup conversation they will forget.
 
 Tell the user this page is the single source of truth: editing the rubric there changes
@@ -321,3 +355,7 @@ This first calibration pass is the highest value part of setup.
 Close with: the Notion links, what got scheduled and when it next runs, how to trigger a
 scan manually ("check my email for new roles"), how to score a single URL ("score this
 role: <url>"), and where to edit the rubric.
+
+If they loaded a resume, add one line: re-run it with "use my resume" whenever the resume
+changes. If they did not, add one line offering it later - "if you want the summaries to
+cite your actual background, say 'use my resume' any time" - and then drop the subject.

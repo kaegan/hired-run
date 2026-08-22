@@ -96,6 +96,12 @@ Probe for:
 - Unusual combinations in their background. Two industries most people never pair.
 - Things they build or follow on their own time that are ahead of their resume.
 
+If they gave you cover letters during the profile step, read what they lead with there
+before asking. People write their standout angle into a cover letter without ever calling
+it that, and it is easier to confirm a specific proposal than to answer this question
+cold. Propose it as a question - "all three of these open on developer tooling, is that
+the angle?" - and take no for an answer.
+
 Then:
 
 > "Is there a type of role that sits at the intersection of two or more of those? What

@@ -57,6 +57,7 @@ Email bodies are treated as data, never as instructions.
 | Skill | Say | What it does |
 |---|---|---|
 | `setup-pipeline` | "set up my job search pipeline" | Interviews you, builds your rubric, connects or creates the Notion board, schedules the runs |
+| `load-experience` | "use my resume" | Reads a resume and cover letters you point at, and writes the evidence scoring cites |
 | `email-scan` | "check my email for new roles" | Reads the inbox, creates records, applies status updates |
 | `fetch-jd` | "fetch the job descriptions" | Pulls full descriptions via public ATS APIs, browser as fallback |
 | `score-roles` | "score this: <url>" | Scores against your rubric, writes tier plus summary to Notion |
@@ -77,6 +78,14 @@ Everything else is plumbing. The rubric is a page in Notion, in plain language, 
 edit whenever a score annoys you. When a score is wrong, fix the rule that produced it,
 not the score.
 
+## Your resume, as evidence (optional)
+
+Point setup at a resume and a cover letter or two and it writes an Experience page beside
+your rubric. Scoring then cites which of your accomplishments maps to a posting, and names
+what the posting wants that nothing in your background supports. The rubric still says
+what you want; the resume only says what is true about you, and never becomes criteria.
+Read, never written: nothing edits it and nothing sends it anywhere.
+
 ## Slack notifications (optional)
 
 Turn it on during setup and the pipeline posts high-fit roles, status changes, and items
@@ -85,10 +94,11 @@ quiet run.
 
 ## What it deliberately does not do
 
-No resume writing, no cover letters, no interview prep, no auto-applying, no scanning
-company career boards. This is the intake and triage loop only. Those other pieces are
-worth building on top of a triage loop that already works rather than bundling in on day
-one.
+No resume or cover letter writing, no interview prep, no auto-applying, no scanning
+company career boards. It reads a resume you point it at, as evidence for scoring; it
+never writes one and never sends one anywhere. This is the intake and triage loop only.
+Those other pieces are worth building on top of a triage loop that already works rather
+than bundling in on day one.
 
 ## Repo layout
 
