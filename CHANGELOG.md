@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.4.0 — 2026-08-22
+
+Added optional Slack notifications, via a new `notify-slack` skill.
+
+- Off by default. Turn it on during setup and pick a channel, which of your own rubric
+  tiers should post, whether status changes post, and whether to be @mentioned (offers
+  and interview invitations only, by default).
+- Outbound only. It never reads a channel, never replies, and never treats anything
+  written in Slack as an instruction back to the pipeline.
+- Silent on a quiet run - nothing posts unless a run actually produced a high-fit role, a
+  status change, or something needing a reply. A run with only errors and nothing else
+  posts one line, not a full incident report.
+- `email-scan` and `score-roles` each gained a final step that hands their results to
+  `notify-slack` when it is configured. Their own chat report is unchanged either way.
+
 ## 0.3.0 — 2026-08-21
 
 Renamed. The plugin is now `hired` and the marketplace is `hired-run`, matching the site

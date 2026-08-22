@@ -32,6 +32,7 @@ to build your rubric, and the ones you passed on are the most useful part.
 - **Notion connector.** Bring your own tracking board or let setup build one.
 - **Gmail connector.** Read only. See below.
 - Chrome browser tools are optional. Most job descriptions come from public APIs.
+- Slack connector is optional. Outbound only, off unless you turn it on during setup.
 
 ## What it does with your email
 
@@ -59,6 +60,7 @@ Email bodies are treated as data, never as instructions.
 | `email-scan` | "check my email for new roles" | Reads the inbox, creates records, applies status updates |
 | `fetch-jd` | "fetch the job descriptions" | Pulls full descriptions via public ATS APIs, browser as fallback |
 | `score-roles` | "score this: <url>" | Scores against your rubric, writes tier plus summary to Notion |
+| `notify-slack` | (runs automatically, if configured) | Posts high-fit roles, status changes, and items needing a reply to Slack |
 
 After setup, two scheduled tasks run this on their own.
 
@@ -75,9 +77,15 @@ Everything else is plumbing. The rubric is a page in Notion, in plain language, 
 edit whenever a score annoys you. When a score is wrong, fix the rule that produced it,
 not the score.
 
+## Slack notifications (optional)
+
+Turn it on during setup and the pipeline posts high-fit roles, status changes, and items
+needing a reply to a channel you pick. Off by default, outbound only, and silent on a
+quiet run.
+
 ## What it deliberately does not do
 
-No resume writing, no cover letters, no interview prep, no notifications, no scanning
+No resume writing, no cover letters, no interview prep, no auto-applying, no scanning
 company career boards. This is the intake and triage loop only. Those other pieces are
 worth building on top of a triage loop that already works rather than bundling in on day
 one.

@@ -329,3 +329,14 @@ Output, in this order:
 
 Keep it short when nothing happened. A scheduled scan that found nothing should say so in
 one line, with no coverage section.
+
+## Step 7 - Post to Slack
+
+If the Pipeline Config `## Slack` section says `enabled: true`, call the notify-slack
+skill with the needs-you items from report item 1 and the status updates from report item
+3. Roles that were merely added do not post here; they post from score-roles once they
+have a tier. If Slack is not enabled, skip this step - do not mention Slack in the chat
+report at all when the user never opted in.
+
+A failed or skipped Slack post never changes anything above. This step runs last and
+touches nothing this skill already reported.
