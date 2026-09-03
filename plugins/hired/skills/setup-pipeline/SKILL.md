@@ -7,7 +7,7 @@ description: >
   profile and their own scoring rubric, connects to an existing Notion board or creates
   a new one, and schedules the recurring scans.
 metadata:
-  version: "0.3.0"
+  version: "0.6.0"
 ---
 
 # Setup Pipeline
@@ -26,8 +26,10 @@ for open-ended ones.
    the Notion connector in their Claude settings and stop here.
 2. **Gmail** - required for email scanning. Try listing labels or a one-message search.
    If it fails, tell them to add the Gmail connector and stop here.
-3. **Chrome browser tools** - optional. If unavailable, the pipeline still works: JD
-   fetching falls back to public ATS APIs and to whatever the alert email contained.
+3. **Browser tools** - optional. The built-in browser is preferred because it works in
+   an unattended scheduled run; Claude in Chrome works too. If neither is available the
+   pipeline still works: JD fetching goes through public ATS APIs and the posting's own
+   page, and only the awkward career pages are lost.
 4. **Slack** - optional. Ask directly: **"Do you want run results posted to a Slack
    channel?"** If yes, look for the Slack connector's send-message tool. If it is not
    available, tell them exactly where to add it (Claude settings, Connectors) and offer
@@ -188,17 +190,26 @@ in, or should I create one?"**
    | `date_added` | Date | no | reporting |
    | `last_seen` | Date | recommended | sighting freshness |
    | `times_seen` | Number | recommended | sighting count |
+   | `source_url` | URL | recommended | dedup: the job board's own link when the posting also has a company-site link |
+   | `application_date` | Date | recommended | the date an application was actually sent, from the confirmation email |
+   | `stale` | Checkbox | recommended | intake hygiene: set on roles left undecided for `stale_days` |
 
 4. For anything missing, ask whether to add it. Explain the cost of skipping: without
    `last_seen` and `times_seen` a suppressed duplicate leaves no trace, so the user cannot
    tell an evergreen req that shows up in every alert from one that has gone quiet.
-   Without `fit_score` there is nowhere to write the score. Add the properties they approve, and
-   record the rest as absent so the other skills degrade instead of erroring.
+   Without `source_url`, a role that arrived from LinkedIn and was then pointed at the
+   company's own posting loses its LinkedIn link, and the next LinkedIn alert for the same
+   req comes through as a duplicate. Without `application_date` the board cannot say how
+   long an application has been waiting, so the no-response sweep in Step 4 is
+   unavailable. Without `fit_score` there is nowhere to write the score. Add the properties
+   they approve, and record the rest as absent so the other skills degrade instead of
+   erroring.
 5. For `status` and `fit_score`, read their existing option values and map the pipeline's
    states onto them rather than adding new ones. The pipeline needs an intake state (a
    new unreviewed role), plus states meaning submitted, screening, interviewing,
-   rejected, and offer. If their board uses different words, use their words everywhere.
-   Never add an option to a Status property without asking.
+   rejected, and offer. A state meaning "no response" is optional and only needed if they
+   turn on the sweep in Step 4. If their board uses different words, use their words
+   everywhere. Never add an option to a Status property without asking.
 6. Ask whether they have a separate Companies database. If yes, capture its ID and its
    title property. If no, set `company` to a text field and skip company dedup.
 
@@ -247,8 +258,32 @@ under this design, since both lanes are scoped queries rather than a full inbox 
 they would rather it never touched their personal mail at all, suggest routing job alerts
 to a dedicated address or Gmail label and setting `gmail_query` to that label.
 
+**Content mode, only for a dedicated mailbox.** If the mailbox is used for nothing but the
+job search, or `gmail_query` scopes the scan to a label that is, offer `intake_mode:
+content`: no allowlist, every message in the window is classified by what it says. On a
+dedicated mailbox the allowlist protects nothing and its gaps still drop signal. Do not
+offer this for a shared personal inbox; the allowlist is what keeps record creation
+contained there. Default is `allowlist`.
+
+**Sent mail, opt in.** Ask: "Should the scan also read mail you send, to catch
+applications you email directly and replies where you confirm an interview?" It is still
+read only, and sent mail can only update a record that already exists, never create one
+and never mark anything withdrawn or rejected. Record `scan_sent: true` or `false`.
+Default is off.
+
+**Two hygiene rules, opt in.** Explain each in one line and take a number or "off":
+
+- `no_response_days` - an application that has sat in the submitted state this long with
+  no status mail moves to a "no response" status, so the board stops counting it as
+  live. Suggest 30. Requires a status meaning no response (Branch B has one) and
+  `application_date` or `date_added`.
+- `stale_days` - an intake role the user has not decided on after this many days gets
+  the `stale` checkbox set, which hides it from the "Needs action" view without changing
+  its status. Suggest 21. Requires the `stale` property.
+
 Record in the config: `alert_senders`, any extra recruiter senders, `gmail_query` if they
-want one, and the scan window (default 2 days, which tolerates a missed run).
+want one, `intake_mode`, `scan_sent`, `no_response_days`, `stale_days`, and the scan
+window (default 2 days, which tolerates a missed run).
 
 ## Step 4b - Slack notifications
 
@@ -288,9 +323,10 @@ alongside their existing board (Branch A). Write these sections, in this order:
   present/absent. Include the database and **data source** IDs, and the Companies DB ID
   if there is one.
 - `## Settings` - `alert_senders` (the lane 1 allowlist), any extra recruiter senders for
-  lane 2, `gmail_query` if set, scan window, batch caps (default: 20 roles scored per run,
-  15 JD fetches per run), and the status and fit score option values in their exact
-  spelling.
+  lane 2, `gmail_query` if set, `intake_mode`, `scan_sent`, `no_response_days`,
+  `stale_days`, scan window, batch caps (default: 20 roles scored per run, 15 JD fetches
+  and 20 browser page loads per run), the user's timezone, and the status and fit score
+  option values in their exact spelling.
 - `## Slack` - only if they opted in during Step 4b: `enabled: true`, `channel_id`,
   `channel_name`, `mention` (their member ID, or "none"), `post_tiers` (their own tier
   names), `post_status_updates`, `post_needs_you`. If they declined, write
@@ -313,25 +349,30 @@ folder they choose. The Notion page is what the skills read.
 
 ## Step 6 - Schedule the runs
 
-Use the scheduled task tools (`create_trigger`), not local cron. Create two tasks:
+Use the scheduled task tools (`create_trigger`), not local cron. Create two tasks. The
+prompts name every skill with its plugin prefix (`hired:email-scan`) and say to invoke it
+by name: an unattended run has no one to disambiguate a similarly named skill from another
+plugin, and a skill read from a file path is whatever stale copy happens to be on disk.
 
 **Task 1: hired.run scan**
 ```
 Name: hired.run scan
 Schedule: every 2 hours, or daily at a time they pick
-Prompt: Run the hired.run email scan. Use the email-scan skill. Read the Pipeline Config
-page in Notion first for the field map, inbox settings, and status values. Then run the
-notify-slack skill to post the result if Slack is configured.
+Prompt: Run the hired.run email scan. Invoke the hired:email-scan skill by name with the
+Skill tool and follow it. Read the Pipeline Config page in Notion first for the field map,
+inbox settings, and status values. This is an unattended run: make reasonable choices
+yourself and never wait for input. email-scan posts to Slack itself if Slack is configured.
 ```
 
 **Task 2: hired.run score**
 ```
 Name: hired.run score
 Schedule: daily, an hour after the scan they care most about
-Prompt: Run hired.run scoring. Use the fetch-jd skill to fill in missing job descriptions,
-then the score-roles skill to score everything unscored. Read the Pipeline Config page in
-Notion first. Report what you scored and anything you could not fetch. Then run the
-notify-slack skill to post the result if Slack is configured.
+Prompt: Run hired.run scoring. Invoke the hired:fetch-jd skill by name with the Skill tool
+to fill in missing job descriptions, then the hired:score-roles skill to score everything
+unscored. Read the Pipeline Config page in Notion first. This is an unattended run: make
+reasonable choices yourself and never wait for input. Report what you scored and anything
+you could not fetch. score-roles posts to Slack itself if Slack is configured.
 ```
 
 Ask about frequency rather than assuming. Someone actively searching wants the scan every

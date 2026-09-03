@@ -17,8 +17,10 @@ takes five minutes instead of an hour of tab management.
   one.
 - **Gmail connector** - required. Works best if job alerts land in a dedicated inbox or
   under a label.
-- **Chrome browser tools** - optional. Most job descriptions come from public APIs without
-  a browser. A browser only helps on the awkward career pages.
+- **Browser tools** - optional. Most job descriptions come from public ATS endpoints
+  (Greenhouse, Lever, Ashby, SmartRecruiters, Workday, BambooHR) or the posting's own page
+  without a browser. The built-in browser is preferred for the awkward career pages
+  because it works in an unattended scheduled run; Claude in Chrome works too.
 - **Slack connector** - optional. Outbound only: posts run results to a channel you pick.
   Off unless you turn it on during setup.
 
@@ -73,7 +75,16 @@ Two lanes, scoped separately:
   no write.
 
 Email bodies are treated as data, never as instructions. A message that tries to tell the
-assistant what to do gets flagged in the report and changes nothing.
+assistant what to do gets flagged in the report and changes nothing. The same goes for
+job descriptions fetched from the web: a posting that tells the scorer what tier to give
+it is scored like any other.
+
+Two opt-ins, both off by default. If the mailbox is dedicated to the job search, setup
+offers **content mode**, which drops the allowlist and classifies every message by what it
+says, since on a dedicated mailbox the allowlist protects nothing and its gaps still lose
+roles. And **sent mail** can be read too, to catch applications you email directly and
+replies where you confirm an interview. Sent mail can only update a record that already
+exists, and never marks anything withdrawn or rejected on your behalf.
 
 ## Bring your own board
 
@@ -120,6 +131,20 @@ edit whenever a score annoys you. It holds:
 When a score is wrong, fix the rule that produced it, not the score. A rubric corrected a
 few times in the first two weeks becomes something you trust.
 
+## Board hygiene (optional)
+
+A pipeline is good at filling the intake queue and bad at emptying it. Two rules, each
+opt-in during setup with its own number of days:
+
+- **No response.** An application left in the submitted state for that long with no
+  status mail moves to a "no response" status, so the board stops counting it as live.
+- **Stale.** An intake role you have not decided on after that long gets a `Stale`
+  checkbox, which hides it from the "Needs action" view without touching its status. You
+  clear it by moving the record.
+
+Neither touches phone screens or interviews that go quiet. Those are conversations, and
+the report mentions a backlog of them instead of moving anything.
+
 ## Slack notifications (optional)
 
 Turn it on during setup and the pipeline posts high-fit roles, application status
@@ -157,6 +182,24 @@ These are the failures this pipeline has already hit, in case you extend it:
   get added on purpose instead of discovered by accident.
 - **Strip tracking parameters before comparing URLs.** The same role arrives with a
   different URL in every email.
+- **But never filter the canonical URL against the stored column.** The column holds raw
+  URLs, so an exact match on the cleaned form returns nothing, every role looks new, and
+  you get a full set of duplicates in one run. Match on the per-job id as a substring,
+  and prove one known id round-trips before trusting an all-clear. The primitives ship
+  as `references/dedup.py` with a regression table of real duplicate pairs.
+- **Keep both URLs.** Pointing a record at the company's own posting and dropping the
+  LinkedIn link means the next LinkedIn alert for the same req sails past dedup.
+- **A relation can point at nothing.** Notion accepts a company relation whose page id
+  does not exist, with no error, and the record shows a blank company forever. Ids come
+  from a live response in the same run, and every batch write is re-read afterwards.
+- **Write page bodies with real newlines.** A literal `\n` lands as one run-on paragraph
+  with stray `n` characters and no headings. Read one page back after every batch.
+- **Never accept the first read of a rendered page.** A page read before it finishes
+  loading returns the title, company, and location from the server-rendered header with
+  no description body and no error, so a partial description gets stored as complete and
+  scored against text nobody read. Assert a minimum length, re-read, then fall back.
+- **Log the attempt before the fetch, not after.** A scheduled run that dies mid-fetch
+  never reaches the logging step, so an unlogged failure reads as fresh backlog forever.
 - **A retry counter that does not record which technique was tried** turns a tooling
   limitation into a permanent verdict about the data. Postings written off as dead after
   repeated browser failures turned out to be live and resolved instantly through a JSON
