@@ -31,7 +31,7 @@ to build your rubric, and the ones you passed on are the most useful part.
 - Claude with Cowork, on the desktop app. Plugins do not run on web or mobile.
 - **Notion connector.** Bring your own tracking board or let setup build one.
 - **Gmail connector.** Read only. See below.
-- Chrome browser tools are optional. Most job descriptions come from public APIs.
+- Browser tools are optional. Most job descriptions come from public ATS APIs.
 - Slack connector is optional. Outbound only, off unless you turn it on during setup.
 
 ## What it does with your email
@@ -50,7 +50,9 @@ Two lanes, scoped separately:
   from whatever system the employer uses. Safe, because a status email can only update a
   record already on your board. No match means no write.
 
-Email bodies are treated as data, never as instructions.
+Email bodies are treated as data, never as instructions. Reading sent mail, to catch
+applications you email directly, is an opt-in; it can only update records that already
+exist.
 
 ## Skills
 

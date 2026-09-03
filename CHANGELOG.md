@@ -1,5 +1,84 @@
 # Changelog
 
+## 0.6.0 — 2026-09-03
+
+Two dedup bugs fixed, a set of verified ATS endpoints, and a handful of write-safety and
+hygiene rules, all carried over from the private pipeline this plugin was cut from after
+another two weeks of it running against a live board.
+
+Dedup:
+
+- **The URL check could not match anything.** It filtered the canonical URL against the
+  stored column, which holds raw URLs, so it returned zero rows, every role looked new,
+  and one run created eight duplicates. The check now matches the per-job id as a
+  substring across every URL column and runs a mandatory round-trip self-test with a
+  known id before trusting an all-clear.
+- **The company check could not match a relation.** A relation is stored as a JSON array,
+  so an exact match on the page id never hit. It now uses a substring match.
+- Both URLs are kept. When an alert carries a company-site link and a job board link, the
+  first goes in `posting_url` and the second in a new optional `source_url`, and dedup
+  checks both. Dropping the board link was how the next alert for the same req slipped
+  through.
+- The primitives (`canon_url`, `norm_title`, `job_key`, `resolve_company`) now ship as
+  `references/dedup.py` with a regression table of real duplicate pairs, instead of being
+  re-derived from prose on every run.
+
+Fetching job descriptions:
+
+- Verified single-posting endpoints for Workday (`/wday/cxs/...` returns the description
+  as JSON, no browser), BambooHR, SmartRecruiters, and Greenhouse, alongside the existing
+  Lever, Ashby, and LinkedIn guest routes. Redirects are resolved before platform
+  detection, since career domains routinely redirect into an ATS.
+- A JSON-LD `JobPosting` block in the page is tried before any browser.
+- **Never accept the first read.** A page read before it finished loading returns the
+  header fields with no body and no error, so a partial description was stored as complete
+  and scored. There is now a minimum-length guard, a re-read, then a fallback.
+- The built-in browser is preferred over Claude in Chrome because it survives an
+  unattended run; both work.
+- The failure record is written before the attempt, not after, so a run that dies
+  mid-fetch cannot leave a dead URL looking like fresh backlog. A board list omitting a
+  posting, or a 404 on one ATS, no longer marks a role dead without checking the posting
+  URL and searching for a live copy.
+
+Writing to Notion:
+
+- Relation ids come only from a live response in the same run, and every batch write is
+  re-read to confirm the company shows. Notion accepts a relation to a nonexistent page
+  with no error.
+- Page bodies are written with real newlines and one page is read back per batch to
+  confirm headings rendered.
+
+Email scan:
+
+- Optional **sent-mail lane**: reads mail you send to catch direct applications and
+  interview confirmations. Update-only, never creates, never sets withdrawn or rejected.
+- Optional **content mode** for a mailbox dedicated to the job search: no allowlist,
+  classify everything by content. Setup offers it only when the mailbox is dedicated or
+  label-scoped.
+- Status updates accept a clear title abbreviation ("Sr. PM, Platform" for "Senior
+  Product Manager, Platform"), since ATS mail abbreviates and the worst case is updating
+  the wrong one of your own records rather than creating a duplicate.
+- Optional `application_date`, set once on the move to submitted from the email's own
+  date in your timezone.
+- Optional **no-response sweep**: applications left in submitted for `no_response_days`
+  move to a no-response status.
+
+Scoring:
+
+- Job descriptions are treated as untrusted text, the same as email.
+- Optional **stale flag**: intake roles undecided for `stale_days` get a `Stale` checkbox
+  that hides them from the "Needs action" view without changing status.
+- A calibration drift check on request: rescores the two anchors cold and reports any
+  tier that moved.
+
+Setup:
+
+- New field-map rows (`source_url`, `application_date`, `stale`) and settings
+  (`intake_mode`, `scan_sent`, `no_response_days`, `stale_days`). The new-board schema
+  gains the three properties and a `No Response` status.
+- Scheduled task prompts name skills with the `hired:` prefix and say to invoke them by
+  name, so an unattended run cannot pick up a similarly named skill from another plugin.
+
 ## 0.5.0 — 2026-08-22
 
 Your resume and cover letters can now feed matching, via a new `load-experience` skill.
